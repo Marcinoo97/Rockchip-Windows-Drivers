@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pl330dma", "..\drivers\dma\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "es8323", "..\drivers\audio\codecs\es8323\es8323.vcxproj", "{15D34676-980D-4406-8C05-AB95AA5B43CA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dwc_eqos", "..\drivers\net\dwc_eqos\dwc_eqos.vcxproj", "{CAD465B6-97D7-402D-85F8-50DE140A6D9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -49,6 +51,12 @@ Global
 		{15D34676-980D-4406-8C05-AB95AA5B43CA}.Release|ARM64.ActiveCfg = Release|ARM64
 		{15D34676-980D-4406-8C05-AB95AA5B43CA}.Release|ARM64.Build.0 = Release|ARM64
 		{15D34676-980D-4406-8C05-AB95AA5B43CA}.Release|ARM64.Deploy.0 = Release|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Debug|ARM64.Build.0 = Debug|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Release|ARM64.ActiveCfg = Release|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Release|ARM64.Build.0 = Release|ARM64
+		{CAD465B6-97D7-402D-85F8-50DE140A6D9D}.Release|ARM64.Deploy.0 = Release|ARM64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

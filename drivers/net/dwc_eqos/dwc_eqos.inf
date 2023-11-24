@@ -1,0 +1,95 @@
+[Version]
+Signature   = "$WINDOWS NT$"
+Class	    = Net
+ClassGuid   = {4d36e972-e325-11ce-bfc1-08002be10318}
+Provider    = %ProviderName%
+CatalogFile = dwc_eqos.cat
+PnpLockdown = 1
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+[SourceDisksNames]
+1 = Disk
+
+[SourceDisksFiles]
+dwc_eqos.sys = 1
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+DWCEQOS_CoInstaller_CopyFiles = 11
+
+[Manufacturer]
+%RKCP%=DWC,NT$ARCH$
+
+[DWC.NT$ARCH$]
+%DWCEQOS.DeviceDesc% = DWCEQOS_Device, ACPI\RCKP6543
+
+[DWCEQOS_Device.NT]
+CopyFiles			= DWCEQOS_CopyFiles
+AddReg	            = DWCEQOS_AddReg_Ndi
+Characteristics		= 0x84	; NCF_PHYSICAL | NCF_HAS_UI
+BusType				= 15	; PNPBus
+*IfType             = 6     ; IF_TYPE_ETHERNET_CSMACD
+*MediaType          = 0     ; NdisMedium802_3
+*PhysicalMediaType  = 14    ; NdisPhysicalMedium802_3
+*IfConnectorPresent = 1
+*ConnectionType     = 1     ; NET_IF_CONNECTION_DEDICATED
+*DirectionType      = 0     ; NET_IF_DIRECTION_SENDRECEIVE
+*AccessType         = 2     ; NET_IF_ACCESS_BROADCAST
+*HardwareLoopback   = 0
+
+[DWCEQOS_CopyFiles]
+dwc_eqos.sys
+
+[DWCEQOS_AddReg_Ndi]
+
+HKR, Ndi, Service, 0, dwc_eqos
+
+HKR, Ndi\Interfaces, UpperRange, 0, "ndis5"
+HKR, Ndi\Interfaces, LowerRange, 0, "ethernet"
+
+HKR, Ndi\params\NetworkAddress, ParamDesc, 0, %NetworkAddress%
+HKR, Ndi\params\NetworkAddress, type,      0, "edit"
+HKR, Ndi\params\NetworkAddress, default,   0, ""
+HKR, Ndi\params\NetworkAddress, LimitText, 0, "12"
+HKR, Ndi\params\NetworkAddress, UpperCase, 0, "1"
+HKR, Ndi\params\NetworkAddress, Optional,  0, "1"
+
+[DWCEQOS_Device.NT.Services]
+AddService = dwc_eqos, 2, DWCEQOS_AddService
+
+[DWCEQOS_AddService]
+AddReg         = DWCEQOS_AddService_AddReg
+DisplayName    = %DWCEQOS.ServiceDesc%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\dwc_eqos.sys
+
+[DWCEQOS_AddService_AddReg]
+HKR,, BootFlags, 0x10001, 1
+
+[DWCEQOS_Device.NT.CoInstallers]
+AddReg=DWCEQOS_CoInstaller_AddReg
+CopyFiles=DWCEQOS_CoInstaller_CopyFiles
+
+[DWCEQOS_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[DWCEQOS_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[DWCEQOS_Device.NT.Wdf]
+KmdfService = dwc_eqos, DWCEQOS_KmdfService
+
+[DWCEQOS_KmdfService]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+ProviderName = "Open Source"
+NetworkAddress = "Network Address"
+RKCP = "Rockchip"
+DWCEQOS.DeviceDesc = "Synopsys DesignWare Ethernet Quality of Service (GMAC)"
+DWCEQOS.ServiceDesc = "DesignWare Ethernet"
