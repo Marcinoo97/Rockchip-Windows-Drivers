@@ -27,13 +27,16 @@
     <ClInclude Include="device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="driver.h">
+    <ClInclude Include="trace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="precomp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="adapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="registers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

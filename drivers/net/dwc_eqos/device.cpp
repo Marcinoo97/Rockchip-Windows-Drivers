@@ -1,6 +1,7 @@
 #include "precomp.h"
 #include "device.h"
 #include "adapter.h"
+#include "trace.h"
 
 struct DeviceContext
 {
@@ -61,8 +62,9 @@ DeviceAdd(_Inout_ WDFDEVICE_INIT* deviceInit)
     PAGED_CODE();
 
     NTSTATUS status;
+    TraceEntry(DeviceAdd);
 
-    // Configure DeviceInit
+    // Configure deviceInit
 
     status = NetDeviceInitConfig(deviceInit);
     if (!NT_SUCCESS(status))
@@ -104,7 +106,6 @@ DeviceAdd(_Inout_ WDFDEVICE_INIT* deviceInit)
 
 Done:
 
-    TraceLoggingWrite(TraceProvider, "DeviceAdd",
-        TraceLoggingNTStatus(status));
+    TraceExitWithStatus(DeviceAdd, status);
     return status;
 }

@@ -1,6 +1,6 @@
 #include "precomp.h"
-#include "driver.h"
 #include "device.h"
+#include "trace.h"
 
 TRACELOGGING_DEFINE_PROVIDER(
     TraceProvider,
@@ -25,7 +25,7 @@ void
 DriverUnload(_In_ WDFDRIVER)
 {
     PAGED_CODE();
-    TraceLoggingWrite(TraceProvider, "DriverUnload");
+    TraceExit(DriverUnload);
     TraceLoggingUnregister(TraceProvider);
 }
 
@@ -36,9 +36,12 @@ DriverEntry(
     _In_ DRIVER_OBJECT* driverObject,
     _In_ UNICODE_STRING* registryPath)
 {
+    PAGED_CODE();
+
     NTSTATUS status;
 
     TraceLoggingRegister(TraceProvider);
+    TraceEntry(DriverEntry, TraceLoggingUnicodeString(registryPath));
 
     WDF_DRIVER_CONFIG config;
     WDF_DRIVER_CONFIG_INIT(&config, DriverDeviceAdd);
@@ -52,9 +55,7 @@ DriverEntry(
         &config,
         WDF_NO_HANDLE);
 
-    TraceLoggingWrite(TraceProvider, "DriverEntry",
-        TraceLoggingNTStatus(status),
-        TraceLoggingUnicodeString(registryPath));
+    TraceExitWithStatus(DriverEntry, status);
 
     if (!NT_SUCCESS(status))
     {

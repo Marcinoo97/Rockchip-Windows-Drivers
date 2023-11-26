@@ -1,3 +1,25 @@
+; MIT License
+;
+; Copyright (c) Doug Cook.
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE
+
 [Version]
 Signature   = "$WINDOWS NT$"
 Class	    = Net
@@ -21,14 +43,16 @@ DefaultDestDir = 12
 DWCEQOS_CoInstaller_CopyFiles = 11
 
 [Manufacturer]
-%RKCP%=DWC,NT$ARCH$
+; NetAdapter 2.0 is supported on Windows 1709 (RS3) and later.
+%RKCP%=DWC,NT$ARCH$.10.0...16299
 
-[DWC.NT$ARCH$]
-%DWCEQOS.DeviceDesc% = DWCEQOS_Device, ACPI\RCKP6543
+[DWC.NT$ARCH$.10.0...16299]
+%DWCEQOS.DeviceDesc% = DWCEQOS_Device, ACPI\RKCP6543
 
 [DWCEQOS_Device.NT]
 CopyFiles			= DWCEQOS_CopyFiles
 AddReg	            = DWCEQOS_AddReg_Ndi
+AddReg	            = DWCEQOS_AddReg_Ndi_params
 Characteristics		= 0x84	; NCF_PHYSICAL | NCF_HAS_UI
 BusType				= 15	; PNPBus
 *IfType             = 6     ; IF_TYPE_ETHERNET_CSMACD
@@ -44,12 +68,11 @@ BusType				= 15	; PNPBus
 dwc_eqos.sys
 
 [DWCEQOS_AddReg_Ndi]
-
-HKR, Ndi, Service, 0, dwc_eqos
-
+HKR, Ndi, Service, 0, %ServiceName%
 HKR, Ndi\Interfaces, UpperRange, 0, "ndis5"
 HKR, Ndi\Interfaces, LowerRange, 0, "ethernet"
 
+[DWCEQOS_AddReg_Ndi_params]
 HKR, Ndi\params\NetworkAddress, ParamDesc, 0, %NetworkAddress%
 HKR, Ndi\params\NetworkAddress, type,      0, "edit"
 HKR, Ndi\params\NetworkAddress, default,   0, ""
@@ -58,7 +81,7 @@ HKR, Ndi\params\NetworkAddress, UpperCase, 0, "1"
 HKR, Ndi\params\NetworkAddress, Optional,  0, "1"
 
 [DWCEQOS_Device.NT.Services]
-AddService = dwc_eqos, 2, DWCEQOS_AddService
+AddService = %ServiceName%, 2, DWCEQOS_AddService
 
 [DWCEQOS_AddService]
 AddReg         = DWCEQOS_AddService_AddReg
@@ -69,7 +92,7 @@ ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
 ServiceBinary  = %12%\dwc_eqos.sys
 
 [DWCEQOS_AddService_AddReg]
-HKR,, BootFlags, 0x10001, 1
+HKR,, BootFlags, 0x10001, 1 ; CM_SERVICE_NETWORK_BOOT_LOAD
 
 [DWCEQOS_Device.NT.CoInstallers]
 AddReg=DWCEQOS_CoInstaller_AddReg
@@ -82,7 +105,7 @@ HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfC
 WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
 
 [DWCEQOS_Device.NT.Wdf]
-KmdfService = dwc_eqos, DWCEQOS_KmdfService
+KmdfService = %ServiceName%, DWCEQOS_KmdfService
 
 [DWCEQOS_KmdfService]
 KmdfLibraryVersion = $KMDFVERSION$
@@ -93,3 +116,6 @@ NetworkAddress = "Network Address"
 RKCP = "Rockchip"
 DWCEQOS.DeviceDesc = "Synopsys DesignWare Ethernet Quality of Service (GMAC)"
 DWCEQOS.ServiceDesc = "DesignWare Ethernet"
+
+; Not localized
+ServiceName = "dwc_eqos"
