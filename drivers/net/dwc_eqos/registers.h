@@ -1,5 +1,7 @@
 #pragma once
 
+// Adapted from Rockchip RK3588 TRM V1.0.
+
 struct ChannelRegisters
 {
     // DMA_CHx_Control @ 0x00 = 0x0:
