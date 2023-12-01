@@ -1,6 +1,430 @@
 #pragma once
+#pragma warning(push)
+#pragma warning(disable:4201) // nonstandard extension used: nameless struct/union
 
 // Adapted from Rockchip RK3588 TRM V1.0.
+
+enum PortSelectSpeed_t : UINT32
+{
+    PortSelectSpeed_1000M=0,// PS = 0, FES = 0
+    PortSelectSpeed_2500M,  // PS = 0, FES = 1
+    PortSelectSpeed_10M,    // PS = 1, FES = 0
+    PortSelectSpeed_100M,   // PS = 1, FES = 1
+};
+
+enum TimestampSource_t : UINT32
+{
+    TimestampSource_Internal = 0,
+    TimestampSource_External,
+    TimestampSource_Both,
+};
+
+enum ActivePhy_t : UINT32
+{
+    ActivePhy_GmiiOrMii = 0,
+    ActivePhy_Rgmii,
+    ActivePhy_Sgmii,
+    ActivePhy_Tbi,
+    ActivePhy_Rmii,
+    ActivePhy_Rtbi,
+    ActivePhy_Smii,
+    ActivePhy_RevMii,
+};
+
+enum AddressWidth_t : UINT32
+{
+    AddressWidth_32 = 0,
+    AddressWidth_40,
+    AddressWidth_48,
+};
+
+enum HashTableSize_t : UINT32
+{
+    HashTableSize_0 = 0,
+    HashTableSize_64,
+    HashTableSize_128,
+    HashTableSize_256,
+};
+
+union MacConfiguration_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 ReceiverEnable : 1;
+        UINT32 TransmitterEnable : 1;
+        UINT32 PreambleLength : 2;
+        UINT32 DeferralCheck : 1;
+        UINT32 BackOffLimit : 2;
+        UINT32 Reserved7 : 1;
+
+        UINT32 DisableRetry : 1;
+        UINT32 DisableCarrierSenseDuringTransmit : 1;
+        UINT32 DisableReceiveOwn : 1;
+        UINT32 EnableCarrierSenseBeforeTransmit : 1;
+        UINT32 LoopbackMode : 1;
+        UINT32 DuplexMode : 1;
+        PortSelectSpeed_t PortSelectSpeed : 2;
+
+        UINT32 JumboPacketEnable : 1;
+        UINT32 JabberDisable : 1;
+        UINT32 PacketBurstEnable : 1;
+        UINT32 WatchdogDisable : 1;
+        UINT32 PadOrCrcStripEnable : 1;
+        UINT32 CrcStripEnableForType : 1;
+        UINT32 Support2kPackets : 1;
+        UINT32 GiantPacketSizeLimitControlEnable : 1;
+
+        UINT32 InterPacketGap : 3;
+        UINT32 ChecksumOffloadEnable : 1;
+        UINT32 SourceAddrInsertionControl : 3;
+        UINT32 ArpOffloadEnable : 1;
+    };
+};
+
+union MacExtConfiguration_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 GiantPacketSizeLimit : 14;
+        UINT32 Reserved14 : 2;
+
+        UINT32 DisableCrcCheckRx : 1;
+        UINT32 SlowProtocolDetect : 1;
+        UINT32 UnicastSlowProtocolPacketDetect : 1;
+        UINT32 Reserved19 : 1;
+        UINT32 HeaderSplitMaxSize : 3;
+        UINT32 Reserved23 : 1;
+        UINT32 ExtendedIpgEnable : 1;
+        UINT32 ExtendedIpg : 5;
+        UINT32 Reserved30 : 2;
+    };
+};
+
+union MacPacketFilter_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 PromiscuousMode : 1;
+        UINT32 HashUnicast : 1;
+        UINT32 HashMulticast : 1;
+        UINT32 DestInverseFilter : 1;
+        UINT32 PassAllMulticast : 1;
+        UINT32 DisableBroadcast : 1;
+        UINT32 PassControl : 2;
+
+        UINT32 SourceInverseFilter : 1;
+        UINT32 SourceFilter : 1;
+        UINT32 HashPerfectFilter : 1;
+        UINT32 Reserved11 : 5;
+
+        UINT32 VlanTagFilter : 1;
+        UINT32 Reserved17 : 3;
+        UINT32 L3L4Filter : 1;
+        UINT32 DropNonTcpUdp : 1;
+        UINT32 Reserved22 : 9;
+        UINT32 ReceiveAll : 1;
+    };
+};
+
+union MacInterruptStatus_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 LinkStatus : 1; // RGSMIIIS - RGMII or SMII Interrupt Status
+        UINT32 Reserved1 : 2;
+        UINT32 Phy : 1; // PHYIS - PHY Interrupt Status
+        UINT32 Pmt : 1; // PMTIS - PMT Interrupt Status (magic/wake-up frame)
+        UINT32 Lpi : 1; // LPIIS - LPI Interrupt Status (energy efficient entry/exit)
+        UINT32 Reserved6 : 2;
+
+        UINT32 Mmc : 1; // MMCIS - MMC Interrupt Status
+        UINT32 MmcRx : 1; // MMCRXIS - MMC Receive Interrupt Status
+        UINT32 MmcTx : 1; // MMCTXIS - MMC Transmit Interrupt Status
+        UINT32 MmcRxChecksum : 1; // MMCRXIPIS - MMC Receive Checksum Offload Interrupt Status
+        UINT32 Timestamp : 1; // TSIS - Timestamp Interrupt Status
+        UINT32 Tx : 1; // TXSTSIS - Transmit Interrupt Status
+        UINT32 Rx : 1; // RXSTSIS - Receive Interrupt Status
+        UINT32 Reserved15 : 2;
+
+        UINT32 FramePreemption : 1; // FPEIS - Frame Preemption Interrupt Status
+        UINT32 Mdio : 1; // MDIOIS - MDIO Interrupt Status
+        UINT32 MmcFpeTx : 1; // MFTIS - MMC FPE Transmit Interrupt Status
+        UINT32 MmcFpeRx : 1; // MFRIS - MMC FPE Receive Interrupt Status
+        UINT32 Reserved21 : 11;
+    };
+};
+
+union MacInterruptEnable_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 LinkStatus : 1; // RGSMIIIE - RGMII or SMII Interrupt Enable
+        UINT32 Reserved1 : 2;
+        UINT32 Phy : 1; // PHYIE - PHY Interrupt Enable
+        UINT32 Pmt : 1; // PMTIE - PMT Interrupt Enable (magic/wake-up frame)
+        UINT32 Lpi : 1; // LPIIE - LPI Interrupt Enable (energy efficient entry/exit)
+        UINT32 Reserved6 : 6;
+        UINT32 Timestamp : 1; // TSIE - Timestamp Interrupt Enable
+        UINT32 Tx : 1; // TXSTSIE - Transmit Interrupt Enable
+        UINT32 Rx : 1; // RXSTSIE - Receive Interrupt Enable
+        UINT32 Reserved15 : 2;
+
+        UINT32 FramePreemption : 1; // FPEIE - Frame Preemption Interrupt Enable
+        UINT32 Mdio : 1; // MDIOIE - MDIO Interrupt Enable
+        UINT32 Reserved19 : 13;
+    };
+};
+
+union MacPhyIfControlStatus_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 TransmitConfig : 1; // TC - Transmit Configuration to PHY
+        UINT32 LinkUpDuringConfig : 1; // LUD - Link Up
+        UINT32 Reserved2 : 14;
+
+        UINT32 FullDuplex : 1; // LNKMODE - Link Mode
+        UINT32 Speed : 2; // SPD - Speed
+        UINT32 LinkUp : 1; // LNKSTS - Link Status
+        UINT32 Reserved20 : 12;
+    };
+};
+
+union MacVersion_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 RkVer : 8;
+        UINT32 UserVer : 8;
+        UINT32 Reserved : 16;
+    };
+};
+
+union MacAddressHigh_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 High16 : 16;
+        UINT32 DmaChannelSelect : 8;
+        UINT32 MaskByteControl : 6;
+        UINT32 SourceAddress : 1;
+        UINT32 AddressEnable : 1;
+    };
+};
+
+union MacHwFeature0_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Mii : 1;  // MIISEL - 10 or 100 Mbps Support
+        UINT32 Gmii : 1; // GMIISEL - 1000 Mbps Support
+        UINT32 HalfDuplex : 1;   // HDSEL - Half Duplex Support
+        UINT32 PcsSel : 1;  // PCSSEL - TBI, SGMII, or RTBI PHY interface
+        UINT32 VlanHash : 1; // VLHASH - VLAN Hash Filter Support
+        UINT32 Mdio : 1;  // SMASEL - MDIO Interface Support
+        UINT32 RemoteWake : 1;  // RWKSEL - PMT Remote Wake-up Packet Enable
+        UINT32 MagicPacket : 1;  // MGKSEL - PMT Magic Packet Enable
+
+        UINT32 ManagementCounters : 1;  // MMCSEL - MAC Management Counters
+        UINT32 ArpOffload : 1; // ARPOFFSEL - ARP Offload Support
+        UINT32 Reserved10 : 2;
+        UINT32 Timestamp : 1;   // TSSEL - IEEE 1588-2008 Timestamp Support
+        UINT32 EnergyEfficient : 1;  // EEESEL - Energy Efficient Ethernet Support
+        UINT32 TxChecksumOffload : 1; // TXCOESEL - Transmit Checksum Offload Engine
+        UINT32 Reserved15 : 1;
+
+        UINT32 RxChecksumOffload : 1; // RXCOESEL - Receive Checksum Offload Engine
+        UINT32 Reserved17 : 1;
+        UINT32 MacAddrCount : 7; // ADDMACADRSEL - MAC Address Register Count
+        TimestampSource_t TimestampSource : 2; // TSSTSSEL - IEEE 1588-2008 Timestamp Source
+        UINT32 SaVlanIns : 1; // SAVLANINS - Source Address or VLAN Insertion
+        ActivePhy_t ActivePhy : 4; // ACTPHYSEL - Active PHY Selected
+    };
+};
+
+union MacHwFeature1_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 RxFifoSize : 5; // RXFIFOSIZE - MTL Receive FIFO Size
+        UINT32 SinglePortRam : 1; // SPRAM - Single Port RAM
+        UINT32 TxFifoSize : 5; // TXFIFOSIZE - MTL Transmit FIFO Size
+        UINT32 OsTen : 1; // OSTEN - One-Step Timestamping Enable
+        UINT32 PtpOff : 1; // PTOEN - PTP Offload Support
+        UINT32 AdvTHword : 1; // ADVTHWORD - IEEE 1588 High Word Register
+        AddressWidth_t AddressWidth : 2; // ADDR64 - Address width
+
+        UINT32 DcbEn : 1; // DCBEN - Data Center Bridging Support
+        UINT32 SplitHeader : 1; // SPHEN - Split Header Support
+        UINT32 TsoEn : 1; // TSOEN - TCP Segmentation Offload Support
+        UINT32 DmaDebug : 1; // DBGMEMA - DMA Debug Support
+        UINT32 AvSel : 1; // AVSEL - AV Bridging Support
+        UINT32 RavSel : 1; // RAVSEL - Rx AV Bridging Support
+        UINT32 Reserved22 : 1;
+        UINT32 PtpOneStep : 1; // POUOST - One Step for PTP over UDP/IP Feature Enable
+
+        HashTableSize_t HashTableSize : 2; // HASHTBLSZ - Hash Table Size
+        UINT32 Reserved26 : 1;
+        UINT32 L3L4Filters : 4; // L3L4FNUM - Number of L3/L4 Filters
+        UINT32 Reserved31 : 1;
+    };
+};
+
+union MacHwFeature2_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 RxQCnt : 4; // RXQCNT - Number of Rx Queues
+        UINT32 Reserved4 : 2;
+        UINT32 TxQCnt : 4; // TXQCNT - Number of Tx Queues
+        UINT32 Reserved10 : 2;
+        UINT32 RxChCnt : 4; // RXCHCNT - Number of DMA Receive Channels
+
+        UINT32 Reserved16 : 2;
+        UINT32 TxChCnt : 4; // TXCHCNT - Number of DMA Transmit Channels
+        UINT32 Reserved22 : 2;
+
+        UINT32 PpsOutputs : 3; // PPSOUTNUM - Number of PPS Outputs
+        UINT32 Reserved27 : 1;
+        UINT32 AuxSnapNum : 3; // AUXSNAPNUM - Number of Auxiliary Snapshot Inputs
+        UINT32 Reserved31 : 1;
+    };
+};
+
+union MacHwFeature3_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 ExtendedVlanTagFilters : 3; // NRVF - Number of Extended VLAN Tag Filters
+        UINT32 Reserved3 : 1;
+        UINT32 ChannelVlanTx : 1; // CBTISEL - Channel VLAN Tx Support
+        UINT32 DoubleVlanTag : 1; // DVLAN - Double VLAN Tag Support
+        UINT32 Reserved6 : 3;
+        UINT32 PacketDuplication : 1; // PDUPSEL - Broadcast/Multicast Packet Duplication Support
+        UINT32 FlexibleReceiveParser : 1; // FRPSEL - Flexible Receive Parser Support
+        UINT32 FlexibleReceiveBufferSize : 2; // FRPBS - Flexible Receive Parser Buffer Size
+        UINT32 FlexibleReceiveEntries : 2; // FRPES - Flexible Receive Parser Entries
+        UINT32 Reserved15 : 1;
+
+        UINT32 EnhancedScheduling : 1; // ESTSEL - Enhancements to Scheduling Traffic Enable
+        UINT32 GateControlDepth : 3; // ESTDEP - Depth of the Gate Control List
+        UINT32 GateControlTime : 2; // ESTWID - Width of the Time Interval field in the Gate Control List
+        UINT32 Reserved22 : 4;
+        UINT32 FramePreemption : 1; // FPESEL - Frame Preemption Enable
+        UINT32 TimeBasedScheduling : 1; // TBSSEL - Time-Based Scheduling Enable
+        UINT32 AutomotiveSafety : 2; // ASP - Automotive Safety Package Enable
+        UINT32 Reserved31 : 2;
+    };
+};
+
+union ChannelTxControl_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Start : 1; // ST
+        UINT32 Reserved1 : 3;
+        UINT32 OperateOnSecondPacket : 1; // OSF
+        UINT32 Reserved5 : 7;
+        UINT32 TcpSegmentation : 1; // TSE
+        UINT32 TcpSegmentationMode : 2; // TSE_MODE
+        UINT32 IgnorePbl : 1; // IPBL
+
+        UINT32 TxPbl : 6; // TxPBL - Transmit Programmable Burst Length
+        UINT32 Reserved22 : 10;
+    };
+};
+
+union ChannelRxControl_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Start : 1; // SR
+        UINT32 ReceiveBufferSize : 14; // RBSZ - Receive Buffer Size, low 3 bits must be 0.
+        UINT32 Reserved15 : 1;
+
+        UINT32 RxPbl : 6; // RxPBL - Receive Programmable Burst Length
+        UINT32 Reserved22 : 9;
+        UINT32 RxPacketFlush : 1; // RPF - Receive Packet Flush
+    };
+};
+
+enum ChannelDmaError_t : UINT32
+{
+    ChannelDmaError_WriteBufferDmaOk = 0,    // 000
+    ChannelDmaError_ReadBufferDmaOk,         // 001
+    ChannelDmaError_WriteDescriptorDmaOk,    // 010
+    ChannelDmaError_ReadDescriptorDmaOk,     // 011
+    ChannelDmaError_WriteBufferDmaError,     // 100
+    ChannelDmaError_ReadBufferDmaError,      // 101
+    ChannelDmaError_WriteDescriptorDmaError, // 110
+    ChannelDmaError_ReadDescriptorDmaError,  // 111
+};
+
+union ChannelInterruptEnable_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Tx : 1; // TIE
+        UINT32 TxStopped : 1; // TXSE
+        UINT32 TxBufferUnavailable : 1; // TBUE
+        UINT32 Reserved3 : 3;
+        UINT32 Rx : 1; // RIE
+        UINT32 RxBufferUnavailable : 1; // RBUE
+
+        UINT32 RxStopped : 1; // RSE
+        UINT32 RxWatchdogTimeout : 1; // RWTE
+        UINT32 EarlyTx : 1; // ETIE
+        UINT32 EarlyRx : 1; // ERIE
+        UINT32 FatalBusError : 1; // FBEE
+        UINT32 ContextDescriptorError : 1; // CDEE
+        UINT32 AbnormalInterruptSummary : 1; // AIE
+        UINT32 NormalInterruptSummary : 1; // NIE
+
+        UINT32 Reserved16 : 16;
+    };
+};
+
+union ChannelStatus_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Tx : 1; // TI
+        UINT32 TxStopped : 1; // TPS
+        UINT32 TxBufferUnavailable : 1; // TBU
+        UINT32 Reserved3 : 3;
+        UINT32 Rx : 1; // RI
+        UINT32 RxBufferUnavailable : 1; // RBU
+
+        UINT32 RxStopped : 1; // RPS
+        UINT32 RxWatchdogTimeout : 1; // RWT
+        UINT32 EarlyTx : 1; // ETI
+        UINT32 EarlyRx : 1; // ERI
+        UINT32 FatalBusError : 1; // FBE
+        UINT32 ContextDescriptorError : 1; // CDE
+        UINT32 AbnormalInterruptSummary : 1; // AIS
+        UINT32 NormalInterruptSummary : 1; // NIS
+
+        ChannelDmaError_t TxDmaError : 3; // TEB - valid only when the FBE bit is set
+        ChannelDmaError_t RxDmaError : 3; // REB - valid only when the FBE bit is set
+        UINT32 Reserved22 : 10;
+    };
+};
 
 struct ChannelRegisters
 {
@@ -12,12 +436,12 @@ struct ChannelRegisters
     // DMA_CHx_Tx_Control @ 0x04 = 0x0:
     // The register controls the Tx features such as PBL, TCP segmentation, and Tx
     // Channel weights.
-    ULONG TxControl;
+    ChannelTxControl_t TxControl;
 
     // DMA_CHx_Rx_Control @ 0x08 = 0x0:
     // The DMA Channel0 Receive Control register controls the Rx features such as PBL,
     // buffer size, and extended status.
-    ULONG RxControl;
+    ChannelRxControl_t RxControl;
 
     ULONG Padding0C[2];
 
@@ -58,7 +482,7 @@ struct ChannelRegisters
     // DMA_CHx_Interrupt_Enable @ 0x34 = 0x0:
     // The Channel0 Interrupt Enable register enables the interrupts reported by the
     // Status register.
-    ULONG InterruptEnable;
+    ChannelInterruptEnable_t InterruptEnable;
 
     // DMA_CHx_Rx_Interrupt_WD_Timer @ 0x38 = 0x0:
     // The Receive Interrupt Watchdog Timer register indicates the watchdog timeout
@@ -101,7 +525,7 @@ struct ChannelRegisters
     // DMA_CHx_Status @ 0x60 = 0x0:
     // The software driver (application) reads the Status register during interrupt
     // service routine or polling to determine the status of the DMA.
-    ULONG Status;
+    ChannelStatus_t Status;
 
     // DMA_CHx_Miss_Frame_Cnt @ 0x64 = 0x0:
     // This register has the number of packet counter that got dropped by the DMA
@@ -116,21 +540,23 @@ struct ChannelRegisters
 
     ULONG Padding6C[5];
 };
+static_assert(sizeof(ChannelRegisters) == 128);
 
 struct MacAddressRegisters
 {
     // MAC_AddressX_High @ 0x00 = 0xFFFF:
     // The MAC AddressX High register holds the upper 16 bits of the Xth 6-byte MAC
     // address of the station.
-    ULONG High16;
+    MacAddressHigh_t High;
 
     // MAC_AddressX_Low @ 0x04 = 0xFFFFFFFF:
     // The MAC AddressX Low register holds the lower 32 bits of the Xth 6-byte MAC
     // address of the station.
     ULONG Low32;
 };
+static_assert(sizeof(MacAddressRegisters) == 8);
 
-struct FilterRegisters
+struct MacL3L4Registers
 {
     // MAC_L3_L4_ControlX @ 0x00 = 0x0:
     // The Layer 3 and Layer 4 Control register controls the operations of filter X of
@@ -172,6 +598,7 @@ struct FilterRegisters
 
     ULONG Padding20[4];
 };
+static_assert(sizeof(MacL3L4Registers) == 48);
 
 struct MtlQueueRegisters
 {
@@ -232,22 +659,23 @@ struct MtlQueueRegisters
     // of received packets to the application.
     ULONG RxControl;
 };
+static_assert(sizeof(MtlQueueRegisters) == 64);
 
 struct Registers
 {
     // MAC_Configuration @ 0x0000 = 0x0:
     // The MAC Configuration Register establishes the operating mode of the MAC.
-    ULONG MacConfiguration;
+    MacConfiguration_t MacConfiguration;
 
     // MAC_Ext_Configuration @ 0x0004 = 0x0:
     // The MAC Extended Configuration Register establishes the operating mode of the
     // MAC.
-    ULONG MacExtConfiguration;
+    MacExtConfiguration_t MacExtConfiguration;
 
     // MAC_Packet_Filter @ 0x0008 = 0x0:
     // The MAC Packet Filter register contains the filter controls for receiving
     // packets.
-    ULONG MacPacketFilter;
+    MacPacketFilter_t MacPacketFilter;
 
     // MAC_Watchdog_Timeout @ 0x000C = 0x0:
     // The Watchdog Timeout register controls the watchdog timeout for received
@@ -333,11 +761,11 @@ struct Registers
 
     // MAC_Interrupt_Status @ 0x00B0 = 0x0:
     // The Interrupt Status register contains the status of interrupts.
-    ULONG MacInterruptStatus;
+    MacInterruptStatus_t MacInterruptStatus;
 
     // MAC_Interrupt_Enable @ 0x00B4 = 0x0:
     // The Interrupt Enable register contains the masks for generating the interrupts.
-    ULONG MacInterruptEnable;
+    MacInterruptEnable_t MacInterruptEnable;
 
     // MAC_Rx_Tx_Status @ 0x00B8 = 0x0:
     // The Receive Transmit Status register contains the Receive and Transmit Error
@@ -413,13 +841,13 @@ struct Registers
 
     // MAC_PHYIF_Control_Status @ 0x00F8 = 0x0:
     // PHY Interface Control and Status Register.
-    ULONG MacPhyifControlStatus;
+    MacPhyIfControlStatus_t MacPhyIfControlStatus;
 
     ULONG Padding00FC[5];
 
     // MAC_Version @ 0x0110 = 0x3051:
     // The version register identifies the version of the GMAC.
-    ULONG MacVersion;
+    MacVersion_t MacVersion;
 
     // MAC_Debug @ 0x0114 = 0x0:
     // The Debug register provides the debug status of various MAC blocks.
@@ -430,22 +858,22 @@ struct Registers
     // MAC_HW_Feature0 @ 0x011C = 0x181173F3:
     // This register indicates the presence of first set of the optional features or
     // functions.
-    ULONG MacHwFeature0;
+    MacHwFeature0_t MacHwFeature0;
 
     // MAC_HW_Feature1 @ 0x0120 = 0x111E01E8:
     // This register indicates the presence of second set of the optional features or
     // functions.
-    ULONG MacHwFeature1;
+    MacHwFeature1_t MacHwFeature1;
 
     // MAC_HW_Feature2 @ 0x0124 = 0x11041041:
     // This register indicates the presence of third set of the optional features or
     // functions.
-    ULONG MacHwFeature2;
+    MacHwFeature2_t MacHwFeature2;
 
     // MAC_HW_Feature3 @ 0x0128 = 0xC370031:
     // This register indicates the presence of fourth set the optional features or
     // functions.
-    ULONG MacHwFeature3;
+    MacHwFeature3_t MacHwFeature3;
 
     ULONG Padding012C[53];
 
@@ -780,7 +1208,7 @@ struct Registers
     ULONG Padding08D8[10];
 
     // MAC_L3_L4 filters @ 0x0900, 0x0930.
-    FilterRegisters MacL3L4[2];
+    MacL3L4Registers MacL3L4[2];
 
     ULONG Padding0950[104];
 
@@ -1057,5 +1485,6 @@ struct Registers
     // DMA_CH1 @ 0x1180.
     ChannelRegisters DmaCh[2];
 };
-
 static_assert(sizeof(Registers) == 0x1200);
+
+#pragma warning(pop)
