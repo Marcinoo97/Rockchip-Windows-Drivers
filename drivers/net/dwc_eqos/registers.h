@@ -4,6 +4,419 @@
 
 // Adapted from Rockchip RK3588 TRM V1.0.
 
+#pragma region ChannelRegisters
+
+union ChannelDmaControl_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 MaxSegmentSize : 14; // MSS - Maximum Segment Size
+        UINT32 Reserved14 : 2;
+
+        UINT32 PblX8 : 1; // PBLx8 - 8xPBL Mode
+        UINT32 Reserved17 : 1;
+        UINT32 DescriptorSkipLength : 3; // DSL - Descriptor Skip Length
+        UINT32 Reserved21 : 11;
+    };
+};
+
+union ChannelTxControl_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Start : 1; // ST
+        UINT32 Reserved1 : 3;
+        UINT32 OperateOnSecondPacket : 1; // OSF
+        UINT32 Reserved5 : 7;
+        UINT32 TcpSegmentation : 1; // TSE
+        UINT32 TcpSegmentationMode : 2; // TSE_MODE
+        UINT32 IgnorePbl : 1; // IPBL
+
+        UINT32 TxPbl : 6; // TxPBL - Transmit Programmable Burst Length
+        UINT32 Reserved22 : 10;
+    };
+};
+
+union ChannelRxControl_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Start : 1; // SR
+        UINT32 ReceiveBufferSize : 14; // RBSZ - Receive Buffer Size, low 3 bits must be 0.
+        UINT32 Reserved15 : 1;
+
+        UINT32 RxPbl : 6; // RxPBL - Receive Programmable Burst Length
+        UINT32 Reserved22 : 9;
+        UINT32 RxPacketFlush : 1; // RPF - Receive Packet Flush
+    };
+};
+
+union ChannelInterruptEnable_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Tx : 1; // TIE
+        UINT32 TxStopped : 1; // TXSE
+        UINT32 TxBufferUnavailable : 1; // TBUE
+        UINT32 Reserved3 : 3;
+        UINT32 Rx : 1; // RIE
+        UINT32 RxBufferUnavailable : 1; // RBUE
+
+        UINT32 RxStopped : 1; // RSE
+        UINT32 RxWatchdogTimeout : 1; // RWTE
+        UINT32 EarlyTx : 1; // ETIE
+        UINT32 EarlyRx : 1; // ERIE
+        UINT32 FatalBusError : 1; // FBEE
+        UINT32 ContextDescriptorError : 1; // CDEE
+        UINT32 AbnormalInterruptSummary : 1; // AIE
+        UINT32 NormalInterruptSummary : 1; // NIE
+
+        UINT32 Reserved16 : 16;
+    };
+};
+
+enum ChannelDmaError_t : UINT32
+{
+    ChannelDmaError_WriteBufferDmaOk = 0,    // 000
+    ChannelDmaError_ReadBufferDmaOk,         // 001
+    ChannelDmaError_WriteDescriptorDmaOk,    // 010
+    ChannelDmaError_ReadDescriptorDmaOk,     // 011
+    ChannelDmaError_WriteBufferDmaError,     // 100
+    ChannelDmaError_ReadBufferDmaError,      // 101
+    ChannelDmaError_WriteDescriptorDmaError, // 110
+    ChannelDmaError_ReadDescriptorDmaError,  // 111
+};
+
+union ChannelStatus_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 Tx : 1; // TI
+        UINT32 TxStopped : 1; // TPS
+        UINT32 TxBufferUnavailable : 1; // TBU
+        UINT32 Reserved3 : 3;
+        UINT32 Rx : 1; // RI
+        UINT32 RxBufferUnavailable : 1; // RBU
+
+        UINT32 RxStopped : 1; // RPS
+        UINT32 RxWatchdogTimeout : 1; // RWT
+        UINT32 EarlyTx : 1; // ETI
+        UINT32 EarlyRx : 1; // ERI
+        UINT32 FatalBusError : 1; // FBE
+        UINT32 ContextDescriptorError : 1; // CDE
+        UINT32 AbnormalInterruptSummary : 1; // AIS
+        UINT32 NormalInterruptSummary : 1; // NIS
+
+        ChannelDmaError_t TxDmaError : 3; // TEB - valid only when the FBE bit is set
+        ChannelDmaError_t RxDmaError : 3; // REB - valid only when the FBE bit is set
+        UINT32 Reserved22 : 10;
+    };
+};
+
+struct ChannelRegisters
+{
+    // DMA_CHx_Control @ 0x00 = 0x0:
+    // The register specifies the MSS value for segmentation, length to skip between
+    // two descriptors, and 8xPBL mode.
+    ChannelDmaControl_t DmaControl;
+
+    // DMA_CHx_Tx_Control @ 0x04 = 0x0:
+    // The register controls the Tx features such as PBL, TCP segmentation, and Tx
+    // Channel weights.
+    ChannelTxControl_t TxControl;
+
+    // DMA_CHx_Rx_Control @ 0x08 = 0x0:
+    // The DMA Channel0 Receive Control register controls the Rx features such as PBL,
+    // buffer size, and extended status.
+    ChannelRxControl_t RxControl;
+
+    ULONG Padding0C[2];
+
+    // DMA_CHx_TxDesc_List_Address @ 0x14 = 0x0:
+    // The Channel0 Tx Descriptor List Address register points the DMA to the start of
+    // Transmit.
+    ULONG TxDescListAddress;
+
+    ULONG Padding18[1];
+
+    // DMA_CHx_RxDesc_List_Address @ 0x1C = 0x0:
+    // The Channel0 Rx Descriptor List Address register points the DMA to the start of
+    // Receive descriptor list.
+    ULONG RxDescListAddress;
+
+    // DMA_CHx_TxDesc_Tail_Pointer @ 0x20 = 0x0:
+    // The Channel0 Tx Descriptor Tail Pointer register points to an offset from the
+    // base and indicates the location of the last valid descriptor.
+    ULONG TxDescTailPointer;
+
+    ULONG Padding24[1];
+
+    // DMA_CHx_RxDesc_Tail_Pointer @ 0x28 = 0x0:
+    // The Channel0 Rx Descriptor Tail Pointer Points to an offset from the base and
+    // indicates the location of the last valid descriptor.
+    ULONG RxDescTailPointer;
+
+    // DMA_CHx_TxDesc_Ring_Length @ 0x2C = 0x0:
+    // The Tx Descriptor Ring Length register contains the length of the Transmit
+    // descriptor ring.
+    ULONG TxDescRingLength;
+
+    // DMA_CHx_RxDesc_Ring_Length @ 0x30 = 0x0:
+    // The Channel0 Rx Descriptor Ring Length register contains the length of the
+    // Receive descriptor circular ring.
+    ULONG RxDescRingLength;
+
+    // DMA_CHx_Interrupt_Enable @ 0x34 = 0x0:
+    // The Channel0 Interrupt Enable register enables the interrupts reported by the
+    // Status register.
+    ChannelInterruptEnable_t InterruptEnable;
+
+    // DMA_CHx_Rx_Interrupt_WD_Timer @ 0x38 = 0x0:
+    // The Receive Interrupt Watchdog Timer register indicates the watchdog timeout
+    // for Receive Interrupt (RI) from the DMA.
+    ULONG RxInterruptWdTimer;
+
+    // DMA_CHx_Slot_Func_Ctrl_Status @ 0x3C = 0x7C0:
+    // The Slot Function Control and Status register contains the control bits for
+    // slot function and the status for Transmit path.
+    ULONG SlotFuncCtrlStatus;
+
+    ULONG Padding40[1];
+
+    // DMA_CHx_Current_App_TxDesc @ 0x44 = 0x0:
+    // The Channel0 Current Application Transmit Descriptor register points to the
+    // current Transmit descriptor read by the DMA.
+    ULONG CurrentAppTxDesc;
+
+    ULONG Padding48[1];
+
+    // DMA_CHx_Current_App_RxDesc @ 0x4C = 0x0:
+    // The Channel0 Current Application Receive Descriptor register points to the
+    // current Receive descriptor read by the DMA.
+    ULONG CurrentAppRxDesc;
+
+    ULONG Padding50[1];
+
+    // DMA_CHx_Current_App_TxBuffer @ 0x54 = 0x0:
+    // The Channel0 Current Application Transmit Buffer Address register points to the
+    // current Tx buffer address read by the DMA.
+    ULONG CurrentAppTxBuffer;
+
+    ULONG Padding58[1];
+
+    // DMA_CHx_Current_App_RxBuffer @ 0x5C = 0x0:
+    // The Channel0 Current Application Receive Buffer Address register points to the
+    // current Rx buffer address read by the DMA.
+    ULONG CurrentAppRxBuffer;
+
+    // DMA_CHx_Status @ 0x60 = 0x0:
+    // The software driver (application) reads the Status register during interrupt
+    // service routine or polling to determine the status of the DMA.
+    ChannelStatus_t Status;
+
+    // DMA_CHx_Miss_Frame_Cnt @ 0x64 = 0x0:
+    // This register has the number of packet counter that got dropped by the DMA
+    // either due to Bus Error or due to programming RPF field in RxControl
+    // register.
+    ULONG MissFrameCnt;
+
+    // DMA_CHx_RX_ERI_Cnt @ 0x68 = 0x0:
+    // The RxEriCnt registers provides the count of the number of times ERI
+    // was asserted.
+    ULONG RxEriCnt;
+
+    ULONG Padding6C[5];
+};
+static_assert(sizeof(ChannelRegisters) == 128);
+
+#pragma endregion
+
+#pragma region MtlQueueRegisters
+
+enum MtlTxQueueEnable_t : UINT32
+{
+    MtlTxQueueEnable_Disabled = 0,
+    MtlTxQueueEnable_EnabledAV,
+    MtlTxQueueEnable_Enabled,
+};
+
+union MtlTxOperationMode_t
+{
+    UINT32 Value32;
+    struct
+    {
+        UINT32 FlushTxQueue : 1; // FTQ
+        UINT32 TxStoreAndForward : 1; // TSF
+        MtlTxQueueEnable_t TxQueueEnable : 2; // TXQEN
+        UINT32 TxThresholdControl : 3; // TTC
+        UINT32 Reserved7 : 9;
+        UINT32 TxQueueSize : 6; // TQS
+        UINT32 Reserved22 : 10;
+    };
+};
+
+struct MtlQueueRegisters
+{
+    // MTL_TxQx_Operation_Mode @ 0x00 = 0x60000:
+    // The Queue X Transmit Operation Mode register establishes the Transmit queue
+    // operating modes and commands.
+    MtlTxOperationMode_t TxOperationMode;
+
+    // MTL_TxQx_Underflow @ 0x04 = 0x0:
+    // The Queue X Underflow Counter register contains the counter for packets aborted
+    // because of Transmit queue underflow and packets missed because of Receive queue
+    // packet flush.
+    ULONG TxUnderflow;
+
+    // MTL_TxQx_Debug @ 0x08 = 0x0:
+    // The Queue X Transmit Debug register gives the debug status of various blocks
+    // related to the Transmit queue.
+    ULONG TxDebug;
+
+    ULONG Padding0C[2];
+
+    // MTL_TxQx_ETS_Status @ 0x14 = 0x0:
+    // The Queue X ETS Status register provides the average traffic transmitted in
+    // Queue X.
+    ULONG TxEtsStatus;
+
+    // MTL_TxQx_Quantum_Weight @ 0x18 = 0x0:
+    // The Queue X Quantum or Weights register contains the quantum value for Deficit
+    // Weighted Round Robin (DWRR), weights for the Weighted Round Robin (WRR), and
+    // Weighted Fair Queuing (WFQ) for Queue X.
+    ULONG TxQuantumWeight;
+
+    ULONG Padding1C[4];
+
+    // MTL_Qx_Interrupt_Ctrl_Status @ 0x2C = 0x0:
+    // This register contains the interrupt enable and status bits for the queue X
+    // interrupts.
+    ULONG InterruptCtrlStatus;
+
+    // MTL_RxQx_Operation_Mode @ 0x30 = 0x0:
+    // The Queue X Receive Operation Mode register establishes the Receive queue
+    // operating modes and command.
+    ULONG RxOperationMode;
+
+    // MTL_RxQx_Miss_Pkt_Ovf_Cnt @ 0x34 = 0x0:
+    // The Queue X Missed Packet and Overflow Counter register contains the counter
+    // for packets missed because of Receive queue packet flush and packets discarded
+    // because of Receive queue overflow.
+    ULONG RxMissPktOvfCnt;
+
+    // MTL_RxQx_Debug @ 0x38 = 0x0:
+    // The Queue X Receive Debug register gives the debug status of various blocks
+    // related to the Receive queue.
+    ULONG RxDebug;
+
+    // MTL_RxQx_Control @ 0x3C = 0x0:
+    // The Queue Receive Control register controls the receive arbitration and passing
+    // of received packets to the application.
+    ULONG RxControl;
+};
+static_assert(sizeof(MtlQueueRegisters) == 64);
+
+#pragma endregion
+
+#pragma region MacAddressRegisters
+
+union MacAddressHigh_t
+{
+    UINT32 Value32;
+    struct
+    {
+        BYTE Addr4;
+        BYTE Addr5;
+        BYTE DmaChannelSelect;
+        BYTE MaskByteControl : 6;
+        BYTE SourceAddress : 1;
+        BYTE AddressEnable : 1;
+    };
+};
+
+union MacAddressLow_t
+{
+    UINT32 Value32;
+    struct
+    {
+        BYTE Addr0;
+        BYTE Addr1;
+        BYTE Addr2;
+        BYTE Addr3;
+    };
+};
+
+struct MacAddressRegisters
+{
+    // MAC_AddressX_High @ 0x00 = 0xFFFF:
+    // The MAC AddressX High register holds the upper 16 bits of the Xth 6-byte MAC
+    // address of the station.
+    MacAddressHigh_t High;
+
+    // MAC_AddressX_Low @ 0x04 = 0xFFFFFFFF:
+    // The MAC AddressX Low register holds the lower 32 bits of the Xth 6-byte MAC
+    // address of the station.
+    MacAddressLow_t Low;
+};
+static_assert(sizeof(MacAddressRegisters) == 8);
+
+#pragma endregion
+
+#pragma region MacL3L4Registers
+
+struct MacL3L4Registers
+{
+    // MAC_L3_L4_ControlX @ 0x00 = 0x0:
+    // The Layer 3 and Layer 4 Control register controls the operations of filter X of
+    // Layer 3 and Layer 4.
+    ULONG Control;
+
+    // MAC_Layer4_AddressX @ 0x04 = 0x0:
+    // The MAC_Layer4_Address, MAC_L3_L4_Control, MAC_Layer3_Addr0_Reg,
+    // MAC_Layer3_Addr1_Reg, MAC_Layer3_Addr2_Reg and MAC_Layer3_Addr3_Reg
+    // registers are reserved (RO with default value) if Enable Layer 3 and Layer 4
+    // Packet Filter option is not selected while configuring the core.
+    ULONG Layer4Address;
+
+    ULONG Padding08[2];
+
+    // MAC_Layer3_Addr0_RegX @ 0x10 = 0x0:
+    // For IPv4 packets, the Layer 3 Address 0 Register contains the 32-bit
+    // IP Source Address field. For IPv6 packets, it contains Bits[31:0] of the
+    // 128-bit IP Source Address or Destination Address field.
+    ULONG Layer3Addr0;
+
+    // MAC_Layer3_Addr1_Reg @ 0x14 = 0x0:
+    // For IPv4 packets, the Layer 3 Address 1 Register contains the 32-bit
+    // IP Destination Address field. For IPv6 packets, it contains Bits[63:32] of the
+    // 128-bit IP Source Address or Destination Address field.
+    ULONG Layer3Addr1;
+
+    // MAC_Layer3_Addr2_Reg @ 0x18 = 0x0:
+    // The Layer 3 Address 2 Register is reserved for IPv4 packets. For
+    // IPv6 packets, it contains Bits[95:64] of 128-bit IP Source Address or
+    // Destination Address field.
+    ULONG Layer3Addr2;
+
+    // MAC_Layer3_Addr3_Reg @ 0x1C = 0x0:
+    // The Layer 3 Address 3 Register is reserved for IPv4 packets. For
+    // IPv6 packets, it contains Bits[127:96] of 128-bit IP Source Address or
+    // Destination Address field.
+    ULONG Layer3Addr3;
+
+    ULONG Padding20[4];
+};
+static_assert(sizeof(MacL3L4Registers) == 48);
+
+#pragma endregion
+
+#pragma region MacRegisters
+
 enum PortSelectSpeed_t : UINT32
 {
     PortSelectSpeed_1000M=0,// PS = 0, FES = 0
@@ -207,19 +620,6 @@ union MacVersion_t
     };
 };
 
-union MacAddressHigh_t
-{
-    UINT32 Value32;
-    struct
-    {
-        UINT32 High16 : 16;
-        UINT32 DmaChannelSelect : 8;
-        UINT32 MaskByteControl : 6;
-        UINT32 SourceAddress : 1;
-        UINT32 AddressEnable : 1;
-    };
-};
-
 union MacHwFeature0_t
 {
     UINT32 Value32;
@@ -329,339 +729,31 @@ union MacHwFeature3_t
     };
 };
 
-union ChannelTxControl_t
+union DmaSysBusMode_t
 {
     UINT32 Value32;
     struct
     {
-        UINT32 Start : 1; // ST
-        UINT32 Reserved1 : 3;
-        UINT32 OperateOnSecondPacket : 1; // OSF
-        UINT32 Reserved5 : 7;
-        UINT32 TcpSegmentation : 1; // TSE
-        UINT32 TcpSegmentationMode : 2; // TSE_MODE
-        UINT32 IgnorePbl : 1; // IPBL
+        UINT32 FixedBurst : 1; // FB - Fixed Burst Length
+        UINT32 BurstLength4 : 1; // BLEN4 - AXI Burst Length 4
+        UINT32 BurstLength8 : 1; // BLEN8 - AXI Burst Length 8
+        UINT32 BurstLength16 : 1; // BLEN16 - AXI Burst Length 16
+        UINT32 Reserved4 : 6;
+        UINT32 AutoAxiLpi : 1; // AAL - Auto AXI LPI
+        UINT32 Reserved11 : 1;
+        UINT32 AddressAlignedBeats : 1; // AAL - Address Aligned Beats
+        UINT32 Reserved13 : 3;
 
-        UINT32 TxPbl : 6; // TxPBL - Transmit Programmable Burst Length
-        UINT32 Reserved22 : 10;
+        UINT32 AxiMaxReadOutstanding : 3; // RD_OSR_LMT - AXI Maximum Read Outstanding Request Limit
+        UINT32 Reserved19 : 5;
+        UINT32 AxiMaxWriteOutstanding : 2; // WR_OSR_LMT - AXI Maximum Write Outstanding Request Limit
+        UINT32 Reserved26 : 4;
+        UINT32 UnlockOnPacket : 1; // LPI_XIT_PKT - Unlock on Magic/Remote Wake-up Packet
+        UINT32 EnableLpi : 1; // EN_LPI - Enable Low Power Interface (LPI)
     };
 };
 
-union ChannelRxControl_t
-{
-    UINT32 Value32;
-    struct
-    {
-        UINT32 Start : 1; // SR
-        UINT32 ReceiveBufferSize : 14; // RBSZ - Receive Buffer Size, low 3 bits must be 0.
-        UINT32 Reserved15 : 1;
-
-        UINT32 RxPbl : 6; // RxPBL - Receive Programmable Burst Length
-        UINT32 Reserved22 : 9;
-        UINT32 RxPacketFlush : 1; // RPF - Receive Packet Flush
-    };
-};
-
-enum ChannelDmaError_t : UINT32
-{
-    ChannelDmaError_WriteBufferDmaOk = 0,    // 000
-    ChannelDmaError_ReadBufferDmaOk,         // 001
-    ChannelDmaError_WriteDescriptorDmaOk,    // 010
-    ChannelDmaError_ReadDescriptorDmaOk,     // 011
-    ChannelDmaError_WriteBufferDmaError,     // 100
-    ChannelDmaError_ReadBufferDmaError,      // 101
-    ChannelDmaError_WriteDescriptorDmaError, // 110
-    ChannelDmaError_ReadDescriptorDmaError,  // 111
-};
-
-union ChannelInterruptEnable_t
-{
-    UINT32 Value32;
-    struct
-    {
-        UINT32 Tx : 1; // TIE
-        UINT32 TxStopped : 1; // TXSE
-        UINT32 TxBufferUnavailable : 1; // TBUE
-        UINT32 Reserved3 : 3;
-        UINT32 Rx : 1; // RIE
-        UINT32 RxBufferUnavailable : 1; // RBUE
-
-        UINT32 RxStopped : 1; // RSE
-        UINT32 RxWatchdogTimeout : 1; // RWTE
-        UINT32 EarlyTx : 1; // ETIE
-        UINT32 EarlyRx : 1; // ERIE
-        UINT32 FatalBusError : 1; // FBEE
-        UINT32 ContextDescriptorError : 1; // CDEE
-        UINT32 AbnormalInterruptSummary : 1; // AIE
-        UINT32 NormalInterruptSummary : 1; // NIE
-
-        UINT32 Reserved16 : 16;
-    };
-};
-
-union ChannelStatus_t
-{
-    UINT32 Value32;
-    struct
-    {
-        UINT32 Tx : 1; // TI
-        UINT32 TxStopped : 1; // TPS
-        UINT32 TxBufferUnavailable : 1; // TBU
-        UINT32 Reserved3 : 3;
-        UINT32 Rx : 1; // RI
-        UINT32 RxBufferUnavailable : 1; // RBU
-
-        UINT32 RxStopped : 1; // RPS
-        UINT32 RxWatchdogTimeout : 1; // RWT
-        UINT32 EarlyTx : 1; // ETI
-        UINT32 EarlyRx : 1; // ERI
-        UINT32 FatalBusError : 1; // FBE
-        UINT32 ContextDescriptorError : 1; // CDE
-        UINT32 AbnormalInterruptSummary : 1; // AIS
-        UINT32 NormalInterruptSummary : 1; // NIS
-
-        ChannelDmaError_t TxDmaError : 3; // TEB - valid only when the FBE bit is set
-        ChannelDmaError_t RxDmaError : 3; // REB - valid only when the FBE bit is set
-        UINT32 Reserved22 : 10;
-    };
-};
-
-struct ChannelRegisters
-{
-    // DMA_CHx_Control @ 0x00 = 0x0:
-    // The register specifies the MSS value for segmentation, length to skip between
-    // two descriptors, and 8xPBL mode.
-    ULONG Control;
-
-    // DMA_CHx_Tx_Control @ 0x04 = 0x0:
-    // The register controls the Tx features such as PBL, TCP segmentation, and Tx
-    // Channel weights.
-    ChannelTxControl_t TxControl;
-
-    // DMA_CHx_Rx_Control @ 0x08 = 0x0:
-    // The DMA Channel0 Receive Control register controls the Rx features such as PBL,
-    // buffer size, and extended status.
-    ChannelRxControl_t RxControl;
-
-    ULONG Padding0C[2];
-
-    // DMA_CHx_TxDesc_List_Address @ 0x14 = 0x0:
-    // The Channel0 Tx Descriptor List Address register points the DMA to the start of
-    // Transmit.
-    ULONG TxDescListAddress;
-
-    ULONG Padding18[1];
-
-    // DMA_CHx_RxDesc_List_Address @ 0x1C = 0x0:
-    // The Channel0 Rx Descriptor List Address register points the DMA to the start of
-    // Receive descriptor list.
-    ULONG RxDescListAddress;
-
-    // DMA_CHx_TxDesc_Tail_Pointer @ 0x20 = 0x0:
-    // The Channel0 Tx Descriptor Tail Pointer register points to an offset from the
-    // base and indicates the location of the last valid descriptor.
-    ULONG TxDescTailPointer;
-
-    ULONG Padding24[1];
-
-    // DMA_CHx_RxDesc_Tail_Pointer @ 0x28 = 0x0:
-    // The Channel0 Rx Descriptor Tail Pointer Points to an offset from the base and
-    // indicates the location of the last valid descriptor.
-    ULONG RxDescTailPointer;
-
-    // DMA_CHx_TxDesc_Ring_Length @ 0x2C = 0x0:
-    // The Tx Descriptor Ring Length register contains the length of the Transmit
-    // descriptor ring.
-    ULONG TxDescRingLength;
-
-    // DMA_CHx_RxDesc_Ring_Length @ 0x30 = 0x0:
-    // The Channel0 Rx Descriptor Ring Length register contains the length of the
-    // Receive descriptor circular ring.
-    ULONG RxDescRingLength;
-
-    // DMA_CHx_Interrupt_Enable @ 0x34 = 0x0:
-    // The Channel0 Interrupt Enable register enables the interrupts reported by the
-    // Status register.
-    ChannelInterruptEnable_t InterruptEnable;
-
-    // DMA_CHx_Rx_Interrupt_WD_Timer @ 0x38 = 0x0:
-    // The Receive Interrupt Watchdog Timer register indicates the watchdog timeout
-    // for Receive Interrupt (RI) from the DMA.
-    ULONG RxInterruptWdTimer;
-
-    // DMA_CHx_Slot_Func_Ctrl_Status @ 0x3C = 0x7C0:
-    // The Slot Function Control and Status register contains the control bits for
-    // slot function and the status for Transmit path.
-    ULONG SlotFuncCtrlStatus;
-
-    ULONG Padding40[1];
-
-    // DMA_CHx_Current_App_TxDesc @ 0x44 = 0x0:
-    // The Channel0 Current Application Transmit Descriptor register points to the
-    // current Transmit descriptor read by the DMA.
-    ULONG CurrentAppTxDesc;
-
-    ULONG Padding48[1];
-
-    // DMA_CHx_Current_App_RxDesc @ 0x4C = 0x0:
-    // The Channel0 Current Application Receive Descriptor register points to the
-    // current Receive descriptor read by the DMA.
-    ULONG CurrentAppRxDesc;
-
-    ULONG Padding50[1];
-
-    // DMA_CHx_Current_App_TxBuffer @ 0x54 = 0x0:
-    // The Channel0 Current Application Transmit Buffer Address register points to the
-    // current Tx buffer address read by the DMA.
-    ULONG CurrentAppTxBuffer;
-
-    ULONG Padding58[1];
-
-    // DMA_CHx_Current_App_RxBuffer @ 0x5C = 0x0:
-    // The Channel0 Current Application Receive Buffer Address register points to the
-    // current Rx buffer address read by the DMA.
-    ULONG CurrentAppRxBuffer;
-
-    // DMA_CHx_Status @ 0x60 = 0x0:
-    // The software driver (application) reads the Status register during interrupt
-    // service routine or polling to determine the status of the DMA.
-    ChannelStatus_t Status;
-
-    // DMA_CHx_Miss_Frame_Cnt @ 0x64 = 0x0:
-    // This register has the number of packet counter that got dropped by the DMA
-    // either due to Bus Error or due to programming RPF field in RxControl
-    // register.
-    ULONG MissFrameCnt;
-
-    // DMA_CHx_RX_ERI_Cnt @ 0x68 = 0x0:
-    // The RxEriCnt registers provides the count of the number of times ERI
-    // was asserted.
-    ULONG RxEriCnt;
-
-    ULONG Padding6C[5];
-};
-static_assert(sizeof(ChannelRegisters) == 128);
-
-struct MacAddressRegisters
-{
-    // MAC_AddressX_High @ 0x00 = 0xFFFF:
-    // The MAC AddressX High register holds the upper 16 bits of the Xth 6-byte MAC
-    // address of the station.
-    MacAddressHigh_t High;
-
-    // MAC_AddressX_Low @ 0x04 = 0xFFFFFFFF:
-    // The MAC AddressX Low register holds the lower 32 bits of the Xth 6-byte MAC
-    // address of the station.
-    ULONG Low32;
-};
-static_assert(sizeof(MacAddressRegisters) == 8);
-
-struct MacL3L4Registers
-{
-    // MAC_L3_L4_ControlX @ 0x00 = 0x0:
-    // The Layer 3 and Layer 4 Control register controls the operations of filter X of
-    // Layer 3 and Layer 4.
-    ULONG Control;
-
-    // MAC_Layer4_AddressX @ 0x04 = 0x0:
-    // The MAC_Layer4_Address, MAC_L3_L4_Control, MAC_Layer3_Addr0_Reg,
-    // MAC_Layer3_Addr1_Reg, MAC_Layer3_Addr2_Reg and MAC_Layer3_Addr3_Reg
-    // registers are reserved (RO with default value) if Enable Layer 3 and Layer 4
-    // Packet Filter option is not selected while configuring the core.
-    ULONG Layer4Address;
-
-    ULONG Padding08[2];
-
-    // MAC_Layer3_Addr0_RegX @ 0x10 = 0x0:
-    // For IPv4 packets, the Layer 3 Address 0 Register contains the 32-bit
-    // IP Source Address field. For IPv6 packets, it contains Bits[31:0] of the
-    // 128-bit IP Source Address or Destination Address field.
-    ULONG Layer3Addr0;
-
-    // MAC_Layer3_Addr1_Reg @ 0x14 = 0x0:
-    // For IPv4 packets, the Layer 3 Address 1 Register contains the 32-bit
-    // IP Destination Address field. For IPv6 packets, it contains Bits[63:32] of the
-    // 128-bit IP Source Address or Destination Address field.
-    ULONG Layer3Addr1;
-
-    // MAC_Layer3_Addr2_Reg @ 0x18 = 0x0:
-    // The Layer 3 Address 2 Register is reserved for IPv4 packets. For
-    // IPv6 packets, it contains Bits[95:64] of 128-bit IP Source Address or
-    // Destination Address field.
-    ULONG Layer3Addr2;
-
-    // MAC_Layer3_Addr3_Reg @ 0x1C = 0x0:
-    // The Layer 3 Address 3 Register is reserved for IPv4 packets. For
-    // IPv6 packets, it contains Bits[127:96] of 128-bit IP Source Address or
-    // Destination Address field.
-    ULONG Layer3Addr3;
-
-    ULONG Padding20[4];
-};
-static_assert(sizeof(MacL3L4Registers) == 48);
-
-struct MtlQueueRegisters
-{
-    // MTL_TxQx_Operation_Mode @ 0x00 = 0x60000:
-    // The Queue X Transmit Operation Mode register establishes the Transmit queue
-    // operating modes and commands.
-    ULONG TxOperationMode;
-
-    // MTL_TxQx_Underflow @ 0x04 = 0x0:
-    // The Queue X Underflow Counter register contains the counter for packets aborted
-    // because of Transmit queue underflow and packets missed because of Receive queue
-    // packet flush.
-    ULONG TxUnderflow;
-
-    // MTL_TxQx_Debug @ 0x08 = 0x0:
-    // The Queue X Transmit Debug register gives the debug status of various blocks
-    // related to the Transmit queue.
-    ULONG TxDebug;
-
-    ULONG Padding0C[2];
-
-    // MTL_TxQx_ETS_Status @ 0x14 = 0x0:
-    // The Queue X ETS Status register provides the average traffic transmitted in
-    // Queue X.
-    ULONG TxEtsStatus;
-
-    // MTL_TxQx_Quantum_Weight @ 0x18 = 0x0:
-    // The Queue X Quantum or Weights register contains the quantum value for Deficit
-    // Weighted Round Robin (DWRR), weights for the Weighted Round Robin (WRR), and
-    // Weighted Fair Queuing (WFQ) for Queue X.
-    ULONG TxQuantumWeight;
-
-    ULONG Padding1C[4];
-
-    // MTL_Qx_Interrupt_Ctrl_Status @ 0x2C = 0x0:
-    // This register contains the interrupt enable and status bits for the queue X
-    // interrupts.
-    ULONG InterruptCtrlStatus;
-
-    // MTL_RxQx_Operation_Mode @ 0x30 = 0x0:
-    // The Queue X Receive Operation Mode register establishes the Receive queue
-    // operating modes and command.
-    ULONG RxOperationMode;
-
-    // MTL_RxQx_Miss_Pkt_Ovf_Cnt @ 0x34 = 0x0:
-    // The Queue X Missed Packet and Overflow Counter register contains the counter
-    // for packets missed because of Receive queue packet flush and packets discarded
-    // because of Receive queue overflow.
-    ULONG RxMissPktOvfCnt;
-
-    // MTL_RxQx_Debug @ 0x38 = 0x0:
-    // The Queue X Receive Debug register gives the debug status of various blocks
-    // related to the Receive queue.
-    ULONG RxDebug;
-
-    // MTL_RxQx_Control @ 0x3C = 0x0:
-    // The Queue Receive Control register controls the receive arbitration and passing
-    // of received packets to the application.
-    ULONG RxControl;
-};
-static_assert(sizeof(MtlQueueRegisters) == 64);
-
-struct Registers
+struct MacRegisters
 {
     // MAC_Configuration @ 0x0000 = 0x0:
     // The MAC Configuration Register establishes the operating mode of the MAC.
@@ -1454,7 +1546,7 @@ struct Registers
 
     // DMA_SysBus_Mode @ 0x1004 = 0x10000:
     // The System Bus mode register controls the behavior of the AHB or AXI master.
-    ULONG DmaSysBusMode;
+    DmaSysBusMode_t DmaSysBusMode;
 
     // DMA_Interrupt_Status @ 0x1008 = 0x0:
     // The application reads this Interrupt Status register during interrupt service
@@ -1485,6 +1577,32 @@ struct Registers
     // DMA_CH1 @ 0x1180.
     ChannelRegisters DmaCh[2];
 };
-static_assert(sizeof(Registers) == 0x1200);
+static_assert(sizeof(MacRegisters) == 0x1200);
+
+#pragma endregion
+
+#pragma region DmaDescriptor
+
+__declspec(align(64))
+union DmaDescriptor
+{
+    struct
+    {
+        UINT32 D1;
+        UINT32 D2;
+        UINT32 D3;
+        UINT32 D4;
+    } Tx;
+
+    struct
+    {
+        UINT32 D1;
+        UINT32 D2;
+        UINT32 D3;
+        UINT32 D4;
+    } Rx;
+};
+
+#pragma endregion
 
 #pragma warning(pop)
